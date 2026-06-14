@@ -40,7 +40,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 100;
+            z-index: 100; /* Nejvýše */
             backdrop-filter: blur(5px);
             transition: opacity 0.5s;
         }
@@ -268,15 +268,27 @@
         const closeFlagText = document.getElementById("closeFlagText");
         const victoryScreen = document.getElementById("victoryScreen");
 
+        // Stav hry
         let gameStarted = false;
 
-        startButton.addEventListener("click", () => {
+        // --- Logika startovací obrazovky (Hybridní pro PC i Mobily) ---
+        function startGame() {
+            if (gameStarted) return; 
             startScreen.style.opacity = "0";
             setTimeout(() => {
                 startScreen.style.display = "none";
                 gameStarted = true;
                 update(); 
             }, 500); 
+        }
+
+        // Naslouchá na PC
+        startButton.addEventListener("click", startGame);
+
+        // Naslouchá na iPadu/mobilu
+        startButton.addEventListener("touchstart", (e) => {
+            e.preventDefault(); 
+            startGame();
         });
 
         const storyPhotoUrl = ""; 
@@ -292,21 +304,20 @@
             { 
                 x: 390, 
                 y: 50, 
-                // --- DOPLNĚNÉ ČÁRKY ---
                 text: "<strong>🎬 Můj vztah k Expe?</strong><br>Započal teprve před pár dny, kdy jsem na vás narazil. Může to znít jako handicap, ale přesně tohle chci změnit. Mojí osobní misí v týmu bude postarat se o to, aby lidí, jako já před přečtením inzerátu, bylo co nejméně.<br><br>Chci dostat Expedition Club k těm, kteří zatím jen koukají z okna a hledají odvahu sbalit batoh a vyrazit ven.", 
                 reached: false,
                 closed: false
             },
             { 
                 x: 390, 
-                y: -250, 
+                y: -350, 
                 text: "<div class='orange-badge'>Jedno z mých adventure story</div><br><strong>🏔️ Doi Inthanon v kraťasech</strong><br><br>Shodou náhod a naprostým omylem jsem se ocitl na nejvyšší hoře Thajska. V kraťasech. Byl to mrazivý, ale úžasný zážitek, který mě naučil jednu věc: Nejdůležitější je open mind a schopnost poradit si v každé situaci. I když vám zrovna mrznou prsty na všech končetinách.<br><br>Přesně tuhle energii, adaptabilitu a nadšení pro každou „šílenost“ chci přenést do vašeho marketingu.", 
                 reached: false,
                 closed: false
             },
             { 
                 x: 390, 
-                y: -550, 
+                y: -750, 
                 text: "<div class='orange-badge'>Proč právě já jako markeťák?</div><br><div style='text-align: left; display: inline-block; font-size: 18px;'>📸 Umím zachytit moment tak, aby lidé měli chuť si hned sbalit batoh. Reels, fotky a texty jsou můj denní chléb.<br>🤝 Rozumím sociálním sítím a vím, jak posilovat sounáležitost cestovatelů. Nejsem jen správce, jsem člen komunity.<br>🚀 Věci dotahuji do konce. Přicházím s nápady sám od sebe a nebojím se zkoušet nové, neprošlapané cesty.<br><br>💼 <strong>Pracovní zkušenosti:</strong><br>• <strong>MAP Vsetínsko:</strong> Marketingový project manažer<br>• <strong>Pealock holding:</strong> Marketingový specialista<br>• <strong>Grunex:</strong> Copywriter<br>• <strong>Česká televize:</strong> Stáž v produkci<br>• <strong>Busfest 2023:</strong> Event manažer</div>", 
                 reached: false,
                 closed: false
@@ -462,8 +473,6 @@
         function drawMountainBackground() {
             ctx.save(); ctx.translate(0, cameraY * 0.25);
             ctx.fillStyle = "#22314d";
-            // --- POSUNUTÉ POZADÍ ABY HORA KONČILA U x:-850 ---
-            // Přidán posun +450 ke všem y souřadnicím hor
             ctx.beginPath(); ctx.moveTo(-50, 1650); ctx.lineTo(100, 650); ctx.lineTo(180, 700);
             ctx.lineTo(300, 350); ctx.lineTo(420, 600); ctx.lineTo(600, 150); ctx.lineTo(750, 550); ctx.lineTo(900, 1650); ctx.fill();
 
