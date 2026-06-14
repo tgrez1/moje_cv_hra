@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moje Cesta - Tomáš Grézl CV</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a2a6c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #111e36 0%, #1a365d 40%, #2b5c8f 70%, #6ba4db 100%);
+        }
+
+        /* --- STARTACÍ OBRAZOVKA --- */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 32, 67, 0.98);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s;
+        }
+        #startScreen h1 {
+            font-size: 48px;
+            margin-bottom: 30px;
+            color: #ff9800;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        #startButton {
+            background-color: #ff9800;
+            color: #0f2043;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            transition: background 0.2s, transform 0.1s;
+        }
+        #startButton:hover {
+            background-color: #ffb300;
+        }
+        #startButton:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        /* --- STYL PRO BĚŽNÉ CHECKPOINTY --- */
+        #infoBox {
+            position: absolute; 
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 32, 67, 0.98);
+            color: white;
+            padding: 30px 50px 30px 40px; 
+            border-radius: 15px;
+            border: 4px solid #ff9800;
+            width: 85%;
+            max-width: 750px;
+            text-align: center;
+            font-size: 20px;
+            display: none;
+            box-shadow: 0 0 40px rgba(255, 152, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            line-height: 1.5;
+            animation: fadeInFixed 0.4s ease-out;
+        }
+
+        /* Styl pro fotku k příběhu (3. checkpoint) */
+        .story-pic {
+            max-width: 100%;
+            max-height: 250px; 
+            border-radius: 8px;
+            border: 3px solid #ff9800;
+            margin-bottom: 15px;
+            display: none; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* --- STYL PRO ORANŽOVÝ ŠTÍTEK (3. A 4. CHECKPOINT) --- */
+        .orange-badge {
+            background-color: rgba(255, 152, 0, 0.15);
+            border: 2px solid #ff9800;
+            color: #ffcb7d;
+            padding: 8px 18px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* --- Styl pro zavírací křížek --- */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 30px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+            user-select: none; 
+        }
+        .close-button:hover {
+            color: white;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            color: white;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            backdrop-filter: blur(3px);
+        }
+
+        /* --- STYL PRO VÍTĚZNOU OBRAZOVKU --- */
+        #victoryScreen {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 32, 67, 0.95);
+            color: white;
+            padding: 35px 55px 35px 45px; 
+            border-radius: 15px;
+            border: 4px solid #4caf50;
+            text-align: center;
+            width: 80%;
+            max-width: 500px; 
+            display: none;
+            z-index: 30;
+            box-shadow: 0 0 40px rgba(76, 175, 80, 0.6);
+            backdrop-filter: blur(5px);
+            animation: fadeInFixed 0.5s ease-out;
+        }
+        #victoryScreen h2 {
+            color: #4caf50;
+            margin-top: 0;
+            font-size: 32px;
+            letter-spacing: 1px;
+        }
+        #victoryScreen p {
+            font-size: 20px;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        
+        .highlight-text {
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 22px;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            border-left: 5px solid #ff9800;
+            text-align: left;
+        }
+        .contact-item {
+            font-size: 18px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .contact-item span {
+            margin-right: 10px;
+            font-size: 22px;
+        }
+        .contact-item a {
+            color: #ff9800;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeInFixed {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1>Horolezec Grézl</h1>
+            <button id="startButton">Začít hrát mou CV hru</button>
+        </div>
+
+        <div id="infoBox">
+            <span class="close-button" id="closeFlagText">×</span>
+            <img id="storyPic" class="story-pic" src="" alt="Doi Inthanon Story">
+            <div id="infoText">Zde bude text checkpointu</div>
+        </div>
+        
+        <div id="victoryScreen">
+            <h2>🏆 VRCHOL ZDOLÁN!</h2>
+            <p>
+                Chcete další level?<br>
+                <span class="highlight-text">Neváhejte s pozváním na osobní pohovor.</span>
+            </p>
+            
+            <div class="contact-card">
+                <div class="contact-item"><span>📞</span> <strong>Telefon:</strong> &nbsp;775 342 181</div>
+                <div class="contact-item"><span>✉️</span> <strong>Mail:</strong> &nbsp;<a href="mailto:tomas.grezl1@gmail.com">tomas.grezl1@gmail.com</a></div>
+            </div>
+        </div>
+        
+        <div id="instructions">
+            <strong>🏔️ HOROLEZEC:</strong><br>
+            ⬅️ ➡️ - Pohyb | ⬆️ - Skok<br>
+            🚩 Dostaň se až na vrchol Everestu!<br>
+            ⚠️ <strong>Pozor na ostrý led!</strong> Dotyk tě vrátí zpět.<br>
+            ❌ <strong>Esc</strong> - Zavřít bublinu (neplatí pro konec)
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const startScreen = document.getElementById("startScreen");
+        const startButton = document.getElementById("startButton");
+        const infoBox = document.getElementById("infoBox");
+        const storyPic = document.getElementById("storyPic");
+        const infoText = document.getElementById("infoText");
+        const closeFlagText = document.getElementById("closeFlagText");
+        const victoryScreen = document.getElementById("victoryScreen");
+
+        let gameStarted = false;
+
+        startButton.addEventListener("click", () => {
+            startScreen.style.opacity = "0";
+            setTimeout(() => {
+                startScreen.style.display = "none";
+                gameStarted = true;
+                update(); 
+            }, 500); 
+        });
+
+        const storyPhotoUrl = ""; 
+        
+        const checkpoints = [
+            { 
+                x: 390, 
+                y: 350, 
+                text: "<strong>Jméno:</strong> Tomáš Grézl &nbsp;|&nbsp; <strong>Věk:</strong> 25<br><strong>Treková bota:</strong> 42,5 &nbsp;|&nbsp; <strong>Prošlapané země:</strong> 20+<br><strong>Vzdělání:</strong> Mgr. marketingové komunikace<br><br><strong>Digitální ambice:</strong><br>Chci Expe vytvořit digitální stopu, která svou délkou předčí vzdálenost od Mariánského příkopu po vrchol Everestu.<br><br><strong>Dobrodružný index:</strong><br>📡 Kilometry mimo signál: 500+ km<br>🗺️ Plány, které nevyšly, ale dopadly ještě líp: 100+<br>📸 Ochota riskovat pro záběr: NEOMEZENÁ", 
+                reached: false,
+                closed: false 
+            },
+            { 
+                x: 390, 
+                y: 50, 
+                // --- DOPLNĚNÉ ČÁRKY ---
+                text: "<strong>🎬 Můj vztah k Expe?</strong><br>Započal teprve před pár dny, kdy jsem na vás narazil. Může to znít jako handicap, ale přesně tohle chci změnit. Mojí osobní misí v týmu bude postarat se o to, aby lidí, jako já před přečtením inzerátu, bylo co nejméně.<br><br>Chci dostat Expedition Club k těm, kteří zatím jen koukají z okna a hledají odvahu sbalit batoh a vyrazit ven.", 
+                reached: false,
+                closed: false
+            },
+            { 
+                x: 390, 
+                y: -250, 
+                text: "<div class='orange-badge'>Jedno z mých adventure story</div><br><strong>🏔️ Doi Inthanon v kraťasech</strong><br><br>Shodou náhod a naprostým omylem jsem se ocitl na nejvyšší hoře Thajska. V kraťasech. Byl to mrazivý, ale úžasný zážitek, který mě naučil jednu věc: Nejdůležitější je open mind a schopnost poradit si v každé situaci. I když vám zrovna mrznou prsty na všech končetinách.<br><br>Přesně tuhle energii, adaptabilitu a nadšení pro každou „šílenost“ chci přenést do vašeho marketingu.", 
+                reached: false,
+                closed: false
+            },
+            { 
+                x: 390, 
+                y: -550, 
+                text: "<div class='orange-badge'>Proč právě já jako markeťák?</div><br><div style='text-align: left; display: inline-block; font-size: 18px;'>📸 Umím zachytit moment tak, aby lidé měli chuť si hned sbalit batoh. Reels, fotky a texty jsou můj denní chléb.<br>🤝 Rozumím sociálním sítím a vím, jak posilovat sounáležitost cestovatelů. Nejsem jen správce, jsem člen komunity.<br>🚀 Věci dotahuji do konce. Přicházím s nápady sám od sebe a nebojím se zkoušet nové, neprošlapané cesty.<br><br>💼 <strong>Pracovní zkušenosti:</strong><br>• <strong>MAP Vsetínsko:</strong> Marketingový project manažer<br>• <strong>Pealock holding:</strong> Marketingový specialista<br>• <strong>Grunex:</strong> Copywriter<br>• <strong>Česká televize:</strong> Stáž v produkci<br>• <strong>Busfest 2023:</strong> Event manažer</div>", 
+                reached: false,
+                closed: false
+            },
+            { 
+                x: 390, 
+                y: -850, 
+                text: "", 
+                reached: false,
+                closed: false
+            }
+        ];
+
+        let respawn = { x: 380, y: 500 }; 
+        let gameWon = false;
+
+        const player = {
+            x: 380, y: 500, width: 30, height: 50,
+            velocityX: 0, velocityY: 0, speed: 4.5, jumpPower: -12.5, grounded: false,
+            facingRight: true
+        };
+
+        const gravity = 0.5;
+        let cameraY = 0;
+        const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false };
+
+        const clouds = [
+            { x: 100, y: -200, size: 60, speed: 0.2 }, { x: 500, y: -500, size: 80, speed: 0.15 },
+            { x: 200, y: 100, size: 50, speed: 0.3 }, { x: 600, y: -900, size: 70, speed: 0.1 },
+            { x: 50, y: -700, size: 55, speed: 0.25 }
+        ];
+
+        const trees = [
+            { x: 40, y: 550, scale: 1.2 }, { x: 120, y: 550, scale: 0.9 },
+            { x: 720, y: 550, scale: 1.1 }, { x: 650, y: 550, scale: 0.8 },
+            { x: 130, y: 450, scale: 0.7 }, { x: 600, y: 450, scale: 0.6 },
+            { x: 450, y: 350, scale: 0.7 }, { x: 620, y: 250, scale: 0.5 }
+        ];
+
+        const bushes = [
+            { x: 330, y: 350, scale: 0.9 },
+            { x: 70,  y: 250, scale: 0.7 },
+            { x: 450, y: 50,  scale: 1.1 },
+            { x: 280, y: -250, scale: 0.8 },
+            { x: 500, y: -250, scale: 1.0 },
+            { x: 560, y: -450, scale: 0.9 },
+            { x: 340, y: -550, scale: 0.8 },
+            { x: 640, y: -750, scale: 0.7 }
+        ];
+
+        const platforms = [
+            { x: -100, y: 550, width: 1000, height: 100 }, 
+            { x: 100, y: 450, width: 150, height: 25 }, { x: 550, y: 450, width: 150, height: 25 }, 
+            { x: 300, y: 350, width: 200, height: 25 }, 
+            { x: 50, y: 250, width: 100, height: 25 }, { x: 150, y: 150, width: 100, height: 25 }, 
+            { x: 550, y: 250, width: 120, height: 25 }, { x: 450, y: 150, width: 120, height: 25 }, 
+            { x: 300, y: 50, width: 200, height: 25 },  
+            { x: 350, y: -50, width: 100, height: 25 }, { x: 100, y: -150, width: 120, height: 25 }, 
+            { x: 600, y: -50, width: 120, height: 25 }, { x: 550, y: -150, width: 120, height: 25 }, 
+            { x: 250, y: -250, width: 300, height: 25 }, 
+            { x: 100, y: -350, width: 120, height: 25 }, { x: 150, y: -450, width: 120, height: 25 },
+            { x: 300, y: -350, width: 150, height: 25 }, { x: 500, y: -450, width: 120, height: 25 }, 
+            { x: 300, y: -550, width: 200, height: 25 }, 
+            { x: 150, y: -650, width: 80, height: 25 }, { x: 550, y: -650, width: 80, height: 25 }, 
+            { x: 600, y: -750, width: 80, height: 25 }, { x: 350, y: -750, width: 80, height: 25 },  
+            { x: 200, y: -850, width: 400, height: 25 }  
+        ];
+
+        const spikes = [
+            { x: 210, y: 130, width: 30, height: 20 }, { x: 380, y: -70, width: 40, height: 20 },  
+            { x: 640, y: -70, width: 40, height: 20 }, { x: 350, y: -370, width: 50, height: 20 }, 
+            { x: 520, y: -470, width: 40, height: 20 }, { x: 380, y: -770, width: 20, height: 20 }  
+        ];
+
+        let snowballs = [];
+        let tempMessageTimeout;
+        let isShowingFlagText = false;
+        
+        let currentFlagIndex = -1; 
+        let lastFlagIndex = -1;    
+
+        window.addEventListener("keydown", (e) => {
+            if (!gameStarted) return; 
+
+            if (e.key === "Escape") {
+                if (infoBox.style.display === "block") {
+                    infoBox.style.display = "none";
+                    if (currentFlagIndex !== -1) {
+                        checkpoints[currentFlagIndex].closed = true;
+                    }
+                }
+            }
+
+            if (gameWon) return; 
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+            if (e.key === "ArrowLeft") player.facingRight = false;
+            if (e.key === "ArrowRight") player.facingRight = true;
+        });
+        window.addEventListener("keyup", (e) => {
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+        });
+
+        closeFlagText.addEventListener("click", () => {
+            infoBox.style.display = "none";
+            if (currentFlagIndex !== -1) {
+                checkpoints[currentFlagIndex].closed = true;
+            }
+        });
+
+        function drawCloud(x, y, size) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+            ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.6, y - size * 0.4, size * 0.8, 0, Math.PI * 2);
+            ctx.arc(x + size * 1.2, y, size * 0.6, 0, Math.PI * 2);
+            ctx.rect(x, y - size * 0.2, size * 1.2, size * 0.6); ctx.fill();
+        }
+
+        function drawTree(x, y, scale) {
+            ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+            ctx.fillStyle = "#5d4037"; ctx.fillRect(-5, -15, 10, 15);
+            ctx.fillStyle = "#1b5e20";
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath(); ctx.moveTo(0, -50 - (i * 15));
+                ctx.lineTo(-25 + (i * 3), -20 - (i * 15)); ctx.lineTo(25 - (i * 3), -20 - (i * 15)); ctx.fill();
+            }
+            ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(0, -80);
+            ctx.lineTo(-5, -65); ctx.lineTo(5, -65); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawBush(x, y, scale) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            ctx.fillStyle = "#1b5e20";
+            ctx.beginPath();
+            ctx.arc(0, -10, 15, 0, Math.PI * 2);
+            ctx.arc(-12, -5, 12, 0, Math.PI * 2);
+            ctx.arc(12, -5, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(0, -18, 10, 0, Math.PI * 2);
+            ctx.arc(-10, -12, 8, 0, Math.PI * 2);
+            ctx.arc(10, -12, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawMountainBackground() {
+            ctx.save(); ctx.translate(0, cameraY * 0.25);
+            ctx.fillStyle = "#22314d";
+            // --- POSUNUTÉ POZADÍ ABY HORA KONČILA U x:-850 ---
+            // Přidán posun +450 ke všem y souřadnicím hor
+            ctx.beginPath(); ctx.moveTo(-50, 1650); ctx.lineTo(100, 650); ctx.lineTo(180, 700);
+            ctx.lineTo(300, 350); ctx.lineTo(420, 600); ctx.lineTo(600, 150); ctx.lineTo(750, 550); ctx.lineTo(900, 1650); ctx.fill();
+
+            const leftRidge = [ [-50, 1650], [50, 1050], [120, 850], [100, 800], [180, 550], [250, 450], [230, 400], [300, 150], [280, 100], [340, -150], [380, -450], [360, -500], [420, -850] ];
+            const rightRidge = [ [420, -850], [450, -650], [430, -600], [520, -250], [490, -170], [580, 150], [620, 350], [600, 450], [700, 750], [670, 850], [800, 1250], [850, 1650] ];
+
+            ctx.fillStyle = "#3a4f7c"; ctx.beginPath(); ctx.moveTo(leftRidge[0][0], leftRidge[0][1]);
+            for (let i = 1; i < leftRidge.length; i++) ctx.lineTo(leftRidge[i][0], leftRidge[i][1]);
+            ctx.lineTo(420, 1650); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = "#253454"; ctx.beginPath(); ctx.moveTo(420, -850);
+            for (let i = 1; i < rightRidge.length; i++) ctx.lineTo(rightRidge[i][0], rightRidge[i][1]);
+            ctx.lineTo(420, 1650); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(340, -150); ctx.lineTo(350, -170); ctx.lineTo(345, -200);
+            ctx.lineTo(380, -450); ctx.lineTo(360, -500); ctx.lineTo(420, -850); ctx.lineTo(420, -100); ctx.lineTo(380, -80); ctx.lineTo(390, -130); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = "#c2cbd4"; ctx.beginPath(); ctx.moveTo(420, -850); ctx.lineTo(450, -650); ctx.lineTo(430, -600);
+            ctx.lineTo(520, -250); ctx.lineTo(490, -170); ctx.lineTo(420, -100); ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawPlayer(x, y) {
+            ctx.save(); ctx.translate(x, y);
+            if (!player.facingRight) { ctx.translate(player.width, 0); ctx.scale(-1, 1); }
+            ctx.fillStyle = "#5c3a21"; ctx.fillRect(-8, 15, 12, 25);
+            ctx.fillStyle = "#ff5722"; ctx.fillRect(4, 15, 22, 25);
+            ctx.fillStyle = "#263238"; ctx.fillRect(6, 40, 8, 10); ctx.fillRect(16, 40, 8, 10);
+            ctx.fillStyle = "#ffccbc"; ctx.beginPath(); ctx.arc(15, 8, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#0277bd"; ctx.beginPath(); ctx.arc(15, 6, 10, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(15, -4, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "black"; ctx.fillRect(18, 5, 3, 3);
+            ctx.restore();
+        }
+
+        function showTemporaryInfo(text) {
+            storyPic.style.display = "none"; 
+            infoText.innerHTML = text;
+            infoBox.style.display = "block";
+            isShowingFlagText = false; 
+            clearTimeout(tempMessageTimeout);
+            tempMessageTimeout = setTimeout(() => { 
+                infoBox.style.display = "none"; 
+            }, 4000); 
+        }
+
+        function update() {
+            if (!gameStarted) return; 
+
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > canvas.width + 100) cloud.x = -150;
+            });
+
+            cameraY = Math.max(0, 300 - player.y);
+
+            if (Math.random() < 0.03 && player.y < 400) { 
+                snowballs.push({
+                    x: Math.random() * canvas.width,
+                    y: -cameraY - 20, 
+                    radius: 3 + Math.random() * 5, 
+                    speedY: 2 + Math.random() * 3,  
+                    speedX: (Math.random() - 0.5) * 1.5 
+                });
+            }
+
+            for (let i = snowballs.length - 1; i >= 0; i--) {
+                let sb = snowballs[i];
+                sb.x += sb.speedX; sb.y += sb.speedY;
+                if (sb.y > -cameraY + canvas.height + 20) snowballs.splice(i, 1);
+            }
+
+            if (gameWon) {
+                player.velocityX = 0;
+                player.velocityY = 0;
+            } else {
+                if (keys.ArrowLeft) player.velocityX = -player.speed;
+                else if (keys.ArrowRight) player.velocityX = player.speed;
+                else player.velocityX = 0;
+
+                if (keys.ArrowUp && player.grounded) {
+                    player.velocityY = player.jumpPower;
+                    player.grounded = false;
+                }
+
+                player.velocityY += gravity;
+                player.x += player.velocityX;
+                player.y += player.velocityY;
+            }
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            if (player.y > 700) {
+                player.x = respawn.x; player.y = respawn.y;
+                player.velocityX = 0; player.velocityY = 0;
+            }
+
+            player.grounded = false;
+            for (let p of platforms) {
+                if (player.x < p.x + p.width && player.x + player.width > p.x &&
+                    player.y + player.height > p.y && player.y + player.height < p.y + player.velocityY + 2 && player.velocityY >= 0) {
+                    player.grounded = true; player.velocityY = 0; player.y = p.y - player.height;
+                }
+            }
+
+            if (!gameWon) {
+                for (let s of spikes) {
+                    if (player.x < s.x + s.width - 5 && player.x + player.width > s.x + 5 &&
+                        player.y < s.y + s.height && player.y + player.height > s.y + 5) {
+                        player.x = respawn.x; player.y = respawn.y;
+                        player.velocityX = 0; player.velocityY = 0;
+                        showTemporaryInfo("Auvajs! 🧊 Led tě vrátil na záchytný bod.");
+                    }
+                }
+            }
+
+            let nearAnyFlag = false;
+            let currentFlagText = "";
+            currentFlagIndex = -1; 
+
+            checkpoints.forEach((cp, index) => {
+                let isTouchingFlag = (player.x < cp.x + 35 && player.x + player.width > cp.x &&
+                                      player.y < cp.y && player.y + player.height > cp.y - 40);
+
+                let isNearFlag = (player.x < cp.x + 85 && player.x + player.width > cp.x - 50 &&
+                                  player.y < cp.y && player.y + player.height > cp.y - 40);
+
+                if (isTouchingFlag) {
+                    cp.reached = true;
+                    respawn.x = cp.x - 45; 
+                    respawn.y = cp.y - 50; 
+
+                    if (index === checkpoints.length - 1 && !gameWon) {
+                        gameWon = true;
+                        infoBox.style.display = "none";
+                        victoryScreen.style.display = "block"; 
+                    }
+                }
+
+                if (isNearFlag && !gameWon && index !== checkpoints.length - 1) {
+                    nearAnyFlag = true;
+                    currentFlagText = cp.text;
+                    currentFlagIndex = index; 
+                }
+            });
+
+            if (lastFlagIndex !== -1 && lastFlagIndex !== currentFlagIndex) {
+                checkpoints[lastFlagIndex].closed = false;
+            }
+            lastFlagIndex = currentFlagIndex; 
+
+            if (nearAnyFlag && !gameWon) {
+                if (!checkpoints[currentFlagIndex].closed) {
+                    if (currentFlagIndex === 2 && storyPhotoUrl !== "") {
+                        storyPic.style.display = "block";
+                        storyPic.src = storyPhotoUrl; 
+                    } else {
+                        storyPic.style.display = "none";
+                    }
+
+                    infoText.innerHTML = currentFlagText;
+                    infoBox.style.display = "block";
+                    isShowingFlagText = true;
+                    clearTimeout(tempMessageTimeout); 
+                } 
+            } else if (isShowingFlagText && !gameWon) {
+                infoBox.style.display = "none";
+                isShowingFlagText = false;
+            }
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            clouds.forEach(cloud => drawCloud(cloud.x, cloud.y + cameraY * 0.1, cloud.size));
+            drawMountainBackground();
+
+            if (!gameStarted) return; 
+
+            ctx.save();
+            ctx.translate(0, cameraY);
+
+            trees.forEach(tree => drawTree(tree.x, tree.y, tree.scale));
+            bushes.forEach(bush => drawBush(bush.x, bush.y, bush.scale));
+
+            checkpoints.forEach(cp => {
+                ctx.fillStyle = "#5d4037"; ctx.fillRect(cp.x, cp.y - 40, 5, 40);
+                ctx.fillStyle = cp.reached ? "#4caf50" : "#e53935";
+                ctx.beginPath(); ctx.moveTo(cp.x + 5, cp.y - 40); ctx.lineTo(cp.x + 35, cp.y - 30); ctx.lineTo(cp.x + 5, cp.y - 20); ctx.fill();
+                ctx.fillStyle = "#ffb300"; ctx.beginPath(); ctx.arc(cp.x + 2.5, cp.y - 42, 4, 0, Math.PI*2); ctx.fill();
+            });
+
+            for (let p of platforms) {
+                ctx.fillStyle = "#455a64"; ctx.fillRect(p.x, p.y, p.width, p.height);
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(p.x, p.y, p.width, 8);
+                for (let i = p.x + 15; i < p.x + p.width - 10; i += 30) {
+                    ctx.beginPath(); ctx.moveTo(i, p.y + 8); ctx.lineTo(i + 5, p.y + 14); ctx.lineTo(i + 10, p.y + 8); ctx.fill();
+                }
+            }
+
+            for (let s of spikes) {
+                ctx.fillStyle = "#81d4fa"; 
+                ctx.beginPath();
+                ctx.moveTo(s.x, s.y + s.height); ctx.lineTo(s.x + s.width / 4, s.y + s.height / 2);
+                ctx.lineTo(s.x + s.width / 2, s.y); ctx.lineTo(s.x + (s.width / 4) * 3, s.y + s.height / 2);
+                ctx.lineTo(s.x + s.width, s.y + s.height); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = "#0288d1"; ctx.lineWidth = 1.5; ctx.stroke();
+            }
+
+            for (let sb of snowballs) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+                ctx.beginPath(); ctx.arc(sb.x, sb.y, sb.radius, 0, Math.PI * 2); ctx.fill();
+            }
+
+            drawPlayer(player.x, player.y);
+            ctx.restore();
+        }
+
+        draw(); 
+    </script>
+</body>
+</html>
